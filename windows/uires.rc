@@ -1,0 +1,50 @@
+#include <windows.h>
+#include "ui.h"
+
+1 VERSIONINFO
+FILEFLAGS VS_FF_PRERELEASE | VS_FF_DEBUG
+FILETYPE VFT_APP
+BEGIN
+	BLOCK "StringFileInfo"
+	BEGIN
+		BLOCK "040904E4"
+		BEGIN
+			VALUE "FileDescription", "deRAR Virtual Filesystem"
+			VALUE "FileVersion", "20101228"
+			VALUE "ProductName", "deRAR"
+			VALUE "ProductVersion", "20101228"
+			VALUE "OriginalFilename", "deRAR.exe"
+		END
+	END
+
+	BLOCK "VarFileInfo"
+	BEGIN
+		VALUE "Translation", 0x409, 1252
+	END
+END
+
+ID_CHOOSEDRIVE DIALOGEX DISCARDABLE 0, 0, 180, 70 STYLE DS_SETFOREGROUND | DS_CENTER
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Choose drive letter"
+FONT 8, "Tahoma"
+BEGIN
+	ICON 101, 301, 8, 8
+	DEFPUSHBUTTON "OK", IDOK, 70, 50, 50, 14
+	PUSHBUTTON "Cancel", IDCANCEL, 125, 50, 50, 14
+	LTEXT "Choose a drive letter that the archive should be mounted to.", ID_STATIC, 40, 7, 130, 19
+	COMBOBOX ID_DRIVE, 41, 28, 24, 50, WS_TABSTOP | WS_CHILD | WS_VSCROLL | CBS_DROPDOWNLIST | CBS_SORT
+END
+
+ID_MENU MENU
+BEGIN
+	POPUP ""
+	BEGIN
+		MENUITEM "Unmount all", ID_MENU_UNMOUNT
+		MENUITEM SEPARATOR
+		MENUITEM "Exit", ID_MENU_EXIT
+	END
+END
+
+101 ICON derar.ico
+ID_TRAYICON ICON derar_tray.ico
+

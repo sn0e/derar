@@ -20,7 +20,7 @@ uint64_t derar_size(struct derar_handle *handle)
 	if (handle->entry->type == DERAR_TYPE_FILE)
 		return handle->entry->file.size;
 
-	return -1;
+	return 0;
 }
 
 void free_entry(struct entry *ent0)
@@ -31,11 +31,9 @@ void free_entry(struct entry *ent0)
 	if (ent0 == NULL)
 		return;
 
-	for (ent = ent0; ent;)
+	ent = ent0;
+	while (ent != NULL)
 	{
-		if (ent == NULL)
-			return;
-
 		if (ent->type == DERAR_TYPE_DIRECTORY)
 			free_entry(ent->dir.subentry);	
 		else
@@ -109,8 +107,8 @@ void entry(struct entry *root, char *path, enum derar_type type, int fd, off_t o
 
 		ent->file.part[p].fd     = fd;
 		ent->file.part[p].foff   = ent->file.size;
-		ent->file.part[p].off    = off;
-		ent->file.part[p].size   = partsize;
+		ent->file.part[p].off    = (uint64_t)off;
+		ent->file.part[p].size   = (uint64_t)partsize;
 
 		ent->file.mode = 0444;
 		ent->file.size += partsize;
@@ -119,60 +117,3 @@ void entry(struct entry *root, char *path, enum derar_type type, int fd, off_t o
 #endif
 	}
 }
-
-#ifdef DEBUG
-
-void walk(struct entry *root, int indent)
-{
-	struct entry *ent;
-	int i;	
-
-	if (root == NULL)
-		return;
-
-	for (ent = root; ent; ent = ent->next)
-	{
-		if (ent->type == DERAR_TYPE_FILE)
-		{
-			for (i = 0; i < indent; i++)
-				putchar(' ');
-			printf("%s (%lu B)\n", ent->name, ent->file.size);
-
-			int p;
-			for (p = 0; p < ent->file.parts; p++)
-			{
-				for (i = 0; i < indent + 4; i++)
-					putchar(' ');
-
-				printf("%lu-%lu at %lu-%lu in %d\n",
-					ent->file.part[p].foff,
-					ent->file.part[p].foff + ent->file.part[p].size,
-					ent->file.part[p].off,
-					ent->file.part[p].off + ent->file.part[p].size,
-					ent->file.part[p].fd);
-			}
-
-			putchar('\n');
-		}
-		else if (ent->type == DERAR_TYPE_DIRECTORY)
-		{
-			for (i = 0; i < indent; i++)
-				putchar(' ');
-			printf("%s <DIR>\n", ent->name);
-			for (i = 0; i < indent; i++)
-				putchar(' ');
-			putchar('{');
-			putchar('\n');
-
-			walk(ent->dir.subentry, indent + 4);
-
-			for (i = 0; i < indent; i++)
-				putchar(' ');
-			putchar('}');
-			putchar('\n');
-		}
-	}
-}
-
-#endif
-

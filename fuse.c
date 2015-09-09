@@ -174,7 +174,7 @@ static int opt_proc(void *data, const char *arg, int key, struct fuse_args *outa
             mountpoint = strdup(arg);
         }
 	} else if (key == KEY_HELP) {
-		fprintf(stderr, "Usage: %s [FUSE options] [--] <rarfile> <mount-point>\n\n", outargs->argv[0]);
+		fprintf(stderr, "Usage: %s [FUSE options] [--] <rarfile> <mountpoint>\n\n", outargs->argv[0]);
 		fuse_opt_add_arg(outargs, "-ho");
 		fuse_main(outargs->argc, outargs->argv, &ops, NULL);
 		exit(0);
@@ -191,18 +191,15 @@ int main(int argc, char **argv)
 
 	if(!path)
 	{
-		fprintf(stderr, "rar archive required\n");
+		fprintf(stderr, "Error: rarfile required. See '%s --help'.\n", argv[0]);
 		exit(1);
 	}
 
     if (!mountpoint)
     {
-        fprintf(stderr, "mountpoint required\n");
+        fprintf(stderr, "Error: mountpoint required. See '%s --help'.\n", argv[0]);
         exit(1);
     }
-
-    fprintf(stderr, "archive: %s\n", path);
-    fprintf(stderr, "mountpoint: %s\n", mountpoint);
 
     if ((path = realpath(path, NULL)) == NULL)
 	{

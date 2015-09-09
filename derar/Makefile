@@ -4,14 +4,19 @@ LDFLAGS   =
 RM        = rm -f
 PREFIX    = /usr/local
 
-target    = derar
-objects   = fuse.o derar.o filename.o filetree.o io.o
-libraries = -lfuse
+derar_objects     = cmdline.o derar.o filename.o filetree.o io.o
+derar_libraries   =
 
-all: $(target)
+derarfs_objects   = fuse.o derar.o filename.o filetree.o io.o
+derarfs_libraries = -lfuse
 
-$(target): $(objects)
-	$(CC) -o $@ $(objects) $(LDFLAGS) $(libraries)
+all: derar derarfs
+
+derar: $(derar_objects)
+	$(CC) -o $@ $(derar_objects) $(LDFLAGS) $(derar_libraries)
+
+derarfs: $(derarfs_objects)
+	$(CC) -o $@ $(derarfs_objects) $(LDFLAGS) $(derarfs_libraries)
 
 clean:
 	$(RM) $(objects) $(target)
@@ -26,4 +31,4 @@ io.c:          Makefile derar.h derar_types.h
 filename.c:    Makefile
 filetree.c:    Makefile derar.h derar_types.h
 fuse.c:        Makefile derar.h
-
+cmdline.c:     Makefile derar.h

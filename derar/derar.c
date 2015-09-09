@@ -15,6 +15,7 @@
 #endif
 
 #include "derar.h"
+#include "derar_debug.h"
 #include "filename.h"
 #include "filetree.h"
 
@@ -55,7 +56,7 @@ static int read_chunk(int fd, void *buf, size_t len)
 
 	if (len - off > 0)
 	{
-		fputs("Unexpected EOF\n", stderr);
+		derar_error("Unexpected EOF\n");
 		errno = EIO;
 		return 0;
 	}
@@ -112,7 +113,7 @@ static int read_fileblock(int fd, uint16_t flags, uint16_t size, uint32_t add_si
 
 	if (f_method != 0x30)
 	{
-		fputs("Skipping compressed file...", stderr);
+		derar_debug("Skipping compressed file...");
 		lseek(fd, size - 25 + partsize, SEEK_CUR);
 
 		return 1;
@@ -132,7 +133,7 @@ static int read_fileblock(int fd, uint16_t flags, uint16_t size, uint32_t add_si
 
 	if ((f_filename = malloc(f_name_size + 1)) == NULL)
 	{
-		perror("malloc");
+		derar_error("malloc failed");
 		return 0;
 	}
 
@@ -140,7 +141,7 @@ static int read_fileblock(int fd, uint16_t flags, uint16_t size, uint32_t add_si
 
 	if (!read_chunk(fd, f_filename, f_name_size))
 	{
-		fputs("Filename could not be read", stderr);
+		derar_error("Filename could not be read");
 
 		free(f_filename);
 		return 0;
@@ -187,19 +188,19 @@ struct derar *derar_initialize(const char *archive)
 
 	for (;;	path_format(path, format, n++))
 	{
-		fprintf(stderr, "Opening %s\n", path);
+		derar_debug("Opening %s\n", path);
 
 		/* Open next file */
 		if ((fd = open(path, O_RDONLY | O_BINARY)) < 0)
 		{
 			if (errno == ENOENT)
 			{
-				fputs("No more parts\n", stderr);
+				derar_debug("No more parts\n");
 				break;
 			}
 			else
 			{
-				fputs("I/O error\n", stderr);
+				derar_debug("I/O error\n");
 				exit(1);
 			}
 		}
@@ -210,14 +211,14 @@ struct derar *derar_initialize(const char *archive)
 
 		if (memcmp("Rar!\x1a\x07", mark, 7) != 0)
 		{
-			fputs("No marker header\n", stderr);
+			derar_error("No marker header\n");
 			break;
 		}
 
 		/* Read archive header */
 		if (read_block(fd, &flags, &size, &add_size) != HEAD_TYPE_ARCHIVE)
 		{
-			fputs("No archive header\n", stderr);
+			derar_error("No archive header\n");
 			break;
 		}
 
@@ -240,7 +241,7 @@ struct derar *derar_initialize(const char *archive)
 			{
 				if (!read_fileblock(fd, flags, size - 7, add_size, root))
 				{
-					fputs("Failed to read fileblock\n", stderr);
+					derar_error("Failed to read fileblock\n");
 					break; /* TODO: Break outer also */
 				}
 			}
@@ -248,7 +249,7 @@ struct derar *derar_initialize(const char *archive)
 				break;
 			else if (lseek(fd, size + add_size - 7, SEEK_CUR) < 0)
 			{
-				fputs("Seek failed\n", stderr);
+				derar_error("lseek failed\n");
 				break;
 			}
 		}
@@ -260,7 +261,7 @@ struct derar *derar_initialize(const char *archive)
 	free(path);
 	free(format);
 
-	fputs("Parse OK\n", stderr);
+	derar_debug("Parse OK\n");
 
 	return derar;
 }
@@ -271,4 +272,3 @@ void derar_deinitialize(struct derar *derar)
 	free(derar->name);
 	free(derar);
 }
-

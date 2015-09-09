@@ -25,4 +25,3 @@ void                 derar_close       (struct derar_handle *);
 uint64_t             derar_size        (struct derar_handle *);
 
 #endif
-

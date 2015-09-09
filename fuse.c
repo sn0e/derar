@@ -1,15 +1,10 @@
-#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <dirent.h>
 #include <errno.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #define FUSE_USE_VERSION 26
 #include <fuse/fuse.h>
-#include <fuse/fuse_opt.h>
 
 #include "derar.h"
 
@@ -132,11 +127,11 @@ static int drfs_release(const char *path, struct fuse_file_info *fi)
 static int drfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 	struct derar_handle *handle = (struct derar_handle *)fi->fh;
-	int ret;
+	ssize_t ret;
 
 	(void)path;
 
-	ret = derar_read(handle, buf, size, offset);
+	ret = derar_read(handle, buf, size, (uint64_t)offset);
 
 	if(ret < 0)
 	{
@@ -144,37 +139,72 @@ static int drfs_read(const char *path, char *buf, size_t size, off_t offset, str
 		return -errno;
 	}
 	else
-		return ret;
+		return (int)ret;
+}
+
+static char *path = NULL;
+static char *mountpoint = NULL;
+
+static struct fuse_operations ops = {
+	.getattr = drfs_getattr,
+	.readdir = drfs_readdir,
+	.open    = drfs_open,
+	.release = drfs_release,
+	.read    = drfs_read
+};
+
+enum {
+	KEY_HELP
+};
+
+static struct fuse_opt drfs_opts[] = {
+		FUSE_OPT_KEY("-h", KEY_HELP),
+		FUSE_OPT_KEY("--help", KEY_HELP),
+		FUSE_OPT_END
+};
+
+static int opt_proc(void *data, const char *arg, int key, struct fuse_args *outargs)
+{
+	(void) data;
+	if (key == FUSE_OPT_KEY_NONOPT) {
+        if (path == NULL) {
+            path = strdup(arg);
+            return 0;
+        } else if (mountpoint == NULL) {
+            mountpoint = strdup(arg);
+        }
+	} else if (key == KEY_HELP) {
+		fprintf(stderr, "Usage: %s [FUSE options] [--] <rarfile> <mount-point>\n\n", outargs->argv[0]);
+		fuse_opt_add_arg(outargs, "-ho");
+		fuse_main(outargs->argc, outargs->argv, &ops, NULL);
+		exit(0);
+	}
+
+	return 1;
 }
 
 int main(int argc, char **argv)
 {
-	int ret, i;
-	char *path = NULL;
-	struct fuse_operations operations;
-	struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+	struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
 
-	if(argc < 2)
+	fuse_opt_parse(&args, NULL, drfs_opts, opt_proc);
+
+	if(!path)
 	{
-		fprintf(stderr, "usage: %s <archive> [fuse options]\n", argv[0]);
-		return -1;
+		fprintf(stderr, "rar archive required\n");
+		exit(1);
 	}
 
-	memset(&operations, 0, sizeof(operations));
+    if (!mountpoint)
+    {
+        fprintf(stderr, "mountpoint required\n");
+        exit(1);
+    }
 
-	operations.getattr = drfs_getattr;
-	operations.readdir = drfs_readdir;
-	operations.open    = drfs_open;
-	operations.release = drfs_release;
-	operations.read    = drfs_read;
+    fprintf(stderr, "archive: %s\n", path);
+    fprintf(stderr, "mountpoint: %s\n", mountpoint);
 
-	for (i = 0; i < argc; i++)
-		if (i == 1)
-			path = argv[1];
-		else
-			fuse_opt_add_arg(&args, argv[i]);
-
-	if ((path = realpath(path, NULL)) == NULL)
+    if ((path = realpath(path, NULL)) == NULL)
 	{
 		perror("realpath");
 		return -1;
@@ -186,14 +216,12 @@ int main(int argc, char **argv)
 
 	if(derar == NULL)
 	{
-		perror("derar_initialize");
 		return -1;
 	}
 
-	ret = fuse_main(args.argc, args.argv, &operations, NULL);
+	int ret = fuse_main(args.argc, args.argv, &ops, NULL);
 
 	derar_deinitialize(derar);
 
 	return ret;
 }
-

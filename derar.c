@@ -15,9 +15,15 @@
 #endif
 
 #include "derar.h"
-#include "derar_debug.h"
 #include "filename.h"
 #include "filetree.h"
+
+#define derar_error(format, ...) fprintf(stderr, format, ##__VA_ARGS__)
+#ifdef DEBUG
+#define derar_debug printf (format, ##__VA_ARGS__)
+#else
+#define derar_debug
+#endif
 
 /* Header types */
 #define HEAD_TYPE_ARCHIVE 0x73

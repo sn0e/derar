@@ -44,14 +44,6 @@
 #define HEAD_FLAG_ARCHIVE_ENCRYPTED 0x0080
 #define HEAD_FLAG_ARCHIVE_FIRST     0x0100
 
-/*
-   TODO: Is this shit really needed?
-
-   Supposedly, read can sometimes be a bitch and only read some of the data
-   we want. Is this so only for sockets though?
-
-   TODO: Check success for every lseek.
- */
 static int read_chunk(int fd, void *buf, size_t len)
 {
 	size_t off = 0;

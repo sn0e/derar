@@ -172,6 +172,7 @@ static int opt_proc(void *data, const char *arg, int key, struct fuse_args *outa
             return 0;
         } else if (mountpoint == NULL) {
             mountpoint = strdup(arg);
+            return 1;
         }
 	} else if (key == KEY_HELP) {
 		fprintf(stderr, "Usage: %s [FUSE options] [--] <rarfile> <mountpoint>\n\n", outargs->argv[0]);

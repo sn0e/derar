@@ -20,9 +20,9 @@
 
 #define derar_error(format, ...) fprintf(stderr, format, ##__VA_ARGS__)
 #ifdef DEBUG
-#define derar_debug printf (format, ##__VA_ARGS__)
+#define derar_debug(format, ...) printf(format, ##__VA_ARGS__)
 #else
-#define derar_debug
+#define derar_debug(format, ...)
 #endif
 
 /* Header types */
